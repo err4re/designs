@@ -1,0 +1,10 @@
+[VARIABLES]
+
+[PREFERENCES]
+LayerOrder=0
+
+[LAYER]
+;<LayerNo>=<Name>,<Border>,<Fill>,<Pattern>,<Order>,<Usable>,<Active>,<Thickness>,<Connections>
+0=Layer 0,1,1,0,0,1,1,1000,
+61=Automatic marks,2,2,0,61,1,1,1000,
+63=Manual marks,4,4,0,63,1,1,1000,

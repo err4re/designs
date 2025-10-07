@@ -1,0 +1,60 @@
+Run 1:  mer. mai 29 23:08:22 2024.  ceacnrs2.1.52869.
+        Em version 18.56 (64-bit Windows) on IRAM-HE-005445 remote.
+
+  Project:  C:\Users\aw270929\scripta CdF\users\Alex\phidl\QRCSJ\Resistors\QRCSJ_2\Sonnet_Feedline_Bot_4_Spirals.son.
+
+    Begin electromagnetic simulation using frequency sweep:
+      ABS Start = 7, Stop = 10 GHZ
+      Em errors detected: 0    Em warnings detected: 0.
+
+Remote em simulation completed jeu. mai 30 21:16:06 2024.
+
+
+Run 2:  ven. août 08 11:09:54 2025.  ceacnrs2.1.90599.
+        Em version 18.56 (64-bit Windows) on IRAM-HE-005445 remote.
+
+  Project:  L:\alex\phidl\QRCSJ_3\Sonnet_Feedline_Bot_4_Spirals_detailed.son.
+
+    Begin electromagnetic simulation using frequency sweep:
+      ABS Start = 7.3, Stop = 7.95 GHZ
+
+    Begin electromagnetic simulation using frequency sweep:
+      Linear Start = 7.4195, Stop = 7.4205, Number = 5 GHZ
+
+    Begin electromagnetic simulation using frequency sweep:
+      Linear Start = 7.5611, Stop = 7.5621, Number = 5 GHZ
+      Em errors detected: 0    Em warnings detected: 0.
+
+
+Run 2:  dim. août 10 00:31:15 2025.  ceacnrs2.1.90599.
+        Em version 18.56 (64-bit Windows) on IRAM-HE-005445 remote.
+
+  Project:  L:\alex\phidl\QRCSJ_3\Sonnet_Feedline_Bot_4_Spirals_detailed.son.
+
+    Begin electromagnetic simulation using frequency sweep:
+      ABS Start = 7.3, Stop = 7.95 GHZ
+      Em errors detected: 0    Em warnings detected: 0.
+
+
+Run 2:  dim. août 10 10:33:17 2025.  ceacnrs2.1.90599.
+        Em version 18.56 (64-bit Windows) on IRAM-HE-005445 remote.
+
+  Project:  L:\alex\phidl\QRCSJ_3\Sonnet_Feedline_Bot_4_Spirals_detailed.son.
+
+    Begin electromagnetic simulation using frequency sweep:
+      Linear Start = 7.418, Stop = 7.4195, Number = 5 GHZ
+      Em errors detected: 0    Em warnings detected: 0.
+
+Remote em simulation completed dim. août 10 20:25:08 2025.
+
+
+Run 3:  dim. août 10 20:53:17 2025.  ceacnrs2.1.90599.
+        Em version 18.56 (64-bit Windows) on IRAM-HE-005445 remote.
+
+  Project:  L:\alex\phidl\QRCSJ_3\Sonnet_Feedline_Bot_4_Spirals_detailed.son.
+
+    Begin electromagnetic simulation using frequency sweep:
+      Linear Start = 7.4191, Stop = 7.41916, Number = 3 GHZ
+      Em errors detected: 0    Em warnings detected: 0.
+
+Remote em simulation completed lun. août 11 04:21:27 2025.
