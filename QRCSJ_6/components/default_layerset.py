@@ -8,45 +8,57 @@ OPTICAL = 0
 
 ROUTING = 1
 
-EBEAM = 11
-EBEAM_DOSE = 1350
+EBEAM = 5
+EBEAM_DOSE = 1950
 
-EBEAM_LOW = 12
-EBEAM_LOW_DOSE = 1200
+EBEAM_VERY_LOW = 6
+EBEAM_VERY_LOW_DOSE = 1350
 
-EBEAM_HIGH = 13
-EBEAM_HIGH_DOSE = 1400
+EBEAM_LOW = 7
+EBEAM_LOW_DOSE = 1500
+
+EBEAM_HIGH = 8
+EBEAM_HIGH_DOSE = 2100
 
 # strong current exposure for big structures
-EBEAM_STRONG = 14
-EBEAM_STRONG_DOSE = 1350
+EBEAM_STRONG = 9
+EBEAM_STRONG_DOSE = 1600
 
-EBEAM_SMALL_JUNCTIONS = 15
-EBEAM_SMALL_JUNCTIONS_DOSE = 1400
+EBEAM_SMALL_JUNCTIONS = 10
+EBEAM_SMALL_JUNCTIONS_DOSE = 2600
 
-EBEAM_LARGE_JUNCTIONS = 16
-EBEAM_LARGE_JUNCTIONS_DOSE = 1300
+EBEAM_JUNCTIONS = 11
+EBEAM_JUNCTIONS_DOSE = 2200
 
-JJ_UNDERCUT = 17
-JJ_UNDERCUT_DOSE = 370
+EBEAM_LARGE_JUNCTIONS = 12
+EBEAM_LARGE_JUNCTIONS_DOSE = 1800
 
-UNDERCUT = 18
-UNDERCUT_DOSE = 300
+EBEAM_JUNCTIONS_STRESS = 13
+EBEAM_JUNCTIONS_STRESS_DOSE = 2600
 
-UNDERCUT_LOW = 19
-UNDERCUT_LOW_DOSE = 270
+JJ_UNDERCUT = 14
+JJ_UNDERCUT_DOSE = 400
+
+UNDERCUT = 15
+UNDERCUT_DOSE = 330
+
+UNDERCUT_VERY_LOW = 16
+UNDERCUT_VERY_LOW_DOSE = 220
+
+UNDERCUT_LOW = 17
+UNDERCUT_LOW_DOSE = 260
 
 EBEAM_TEST = 20
 UNDERCUT_TEST = 30
 
 num_ebeam_test_doses = 5
-start_dose = 1100
-end_dose = 1600
+start_dose = 1700
+end_dose = 3200
 ebeam_test_doses = np.linspace(start_dose, end_dose, num_ebeam_test_doses, dtype=int)
 
 num_undercut_test_doses = 5
-start_undercut_dose = 260
-end_undercut_dose = 460
+start_undercut_dose = 300
+end_undercut_dose = 600
 undercut_test_doses = np.linspace(start_undercut_dose, end_undercut_dose, num_undercut_test_doses, dtype=int)
 
 EBEAM_LOG_TEST = 40
@@ -58,9 +70,22 @@ end_log_dose = 5000
 ebeam_log_test_doses = np.geomspace(start_log_dose, end_log_dose, num_ebeam_log_test_doses, dtype=int)
 
 num_undercut_log_test_doses = 5
-start_log_undercut_dose = 250
-end_log_undercut_dose = 550
+start_log_undercut_dose = 200
+end_log_undercut_dose = 1200
 undercut_log_test_doses = np.geomspace(start_log_undercut_dose, end_log_undercut_dose, num_undercut_log_test_doses, dtype=int)
+
+EBEAM_FINE_TEST = 45
+UNDERCUT_FINE_TEST = 55
+
+num_ebeam_test_doses = 5
+start_dose = 2300
+end_dose = 2900
+ebeam_fine_test_doses = np.linspace(start_dose, end_dose, num_ebeam_test_doses, dtype=int)
+
+num_undercut_test_doses = 5
+start_undercut_dose = 340
+end_undercut_dose = 460
+undercut_fine_test_doses = np.linspace(start_undercut_dose, end_undercut_dose, num_undercut_test_doses, dtype=int)
 
 
 WRITEFIELD_EBEAM = 70
@@ -131,6 +156,12 @@ default_ls.add_layer(name = 'ebeam',
                     description = 'layer for ebeam lithography',
                     color = 'blue')
 
+default_ls.add_layer(name = f'ebeam_very_low',
+                    gds_layer = EBEAM_VERY_LOW,
+                    gds_datatype = EBEAM_VERY_LOW_DOSE, #low ebeam dose
+                    description = 'layer for very low dose ebeam lithography',
+                    color = 'blue')
+
 default_ls.add_layer(name = f'ebeam_low',
                     gds_layer = EBEAM_LOW,
                     gds_datatype = EBEAM_LOW_DOSE, #low ebeam dose
@@ -155,10 +186,22 @@ default_ls.add_layer(name = 'ebeam_small_junctions',
                     description = 'layer for small junction ebeam lithography',
                     color = 'darkblue')
 
+default_ls.add_layer(name = 'ebeam_junctions',
+                    gds_layer = EBEAM_JUNCTIONS,
+                    gds_datatype = EBEAM_JUNCTIONS_DOSE, #ebeam dose
+                    description = 'layer for normal junction ebeam lithography',
+                    color = 'darkblue')
+
 default_ls.add_layer(name = 'ebeam_large_junctions',
                     gds_layer = EBEAM_LARGE_JUNCTIONS,
                     gds_datatype = EBEAM_LARGE_JUNCTIONS_DOSE, #ebeam dose
                     description = 'layer for small junction ebeam lithography',
+                    color = 'darkblue')
+
+default_ls.add_layer(name = 'ebeam_junctions_stress',
+                    gds_layer = EBEAM_JUNCTIONS_STRESS,
+                    gds_datatype = EBEAM_JUNCTIONS_STRESS_DOSE, #ebeam dose
+                    description = 'layer for junction stress relief structures ebeam lithography',
                     color = 'darkblue')
 
 default_ls.add_layer(name = 'jj_undercut',
@@ -171,6 +214,12 @@ default_ls.add_layer(name = 'undercut',
                     gds_layer = UNDERCUT,
                     gds_datatype = UNDERCUT_DOSE, #ebeam undercut dose
                     description = 'layer for ebeam undercut',
+                    color = 'darkblue')
+
+default_ls.add_layer(name = 'undercut_very_low',
+                    gds_layer = UNDERCUT_VERY_LOW,
+                    gds_datatype = UNDERCUT_VERY_LOW_DOSE, #ebeam low undercut dose
+                    description = 'layer for very low dose ebeam undercut',
                     color = 'darkblue')
 
 default_ls.add_layer(name = 'undercut_low',
@@ -206,3 +255,17 @@ for i, undercut_dose in enumerate(undercut_log_test_doses):
                     gds_datatype = undercut_dose, #undercut dose
                     description = 'layer for ebeam lithography',
                     color = 'blue')
+    
+for i, dose in enumerate(ebeam_fine_test_doses):
+    default_ls.add_layer(name = f'ebeam_fine_test_{i}',
+                    gds_layer = EBEAM_FINE_TEST+i,
+                    gds_datatype = dose, #ebeam dose
+                    description = 'layer for ebeam lithography dose test',
+                    color = 'blue')
+
+for i, undercut_dose in enumerate(undercut_fine_test_doses):
+    default_ls.add_layer(name = f'undercut_fine_test_{i}',
+                    gds_layer = UNDERCUT_FINE_TEST+i,
+                    gds_datatype = undercut_dose, #undercut dose
+                    description = 'layer for ebeam lithography',
+                    color = 'blue')    

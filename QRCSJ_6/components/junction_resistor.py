@@ -24,6 +24,8 @@ from components.utils import WritefieldParams
 from components.junction import JJ, JJParams
 from components.resistor import Resistor, ResParams
 
+
+
 ### define parameters for coupling capacitor
 @dataclass
 class CapaParams:
@@ -39,7 +41,7 @@ class CapaParams:
     no_resistor: bool = False
 
     ebeam_capa: bool = False
-    ebeam_capa_spacing: float = 2.6
+    ebeam_capa_spacing: float = 2.8
     ebeam_capa_height: float = 4.0
     ebeam_capa_width: float = 20.0
 
@@ -55,8 +57,8 @@ class CapaParams:
     mirrored_x_axis: bool = False
 
     ebeam_layer: Layer = default_ls['ebeam']
-    ebeam_capa_layer: Layer = default_ls['ebeam_low']
-    undercut_layer: Layer = default_ls['undercut_low']
+    ebeam_capa_layer: Layer = default_ls['ebeam_very_low']
+    undercut_layer: Layer = default_ls['undercut_very_low']
 
 class JJResistor():
     def __init__(self) -> None:
@@ -117,10 +119,10 @@ class JJResistor():
     @staticmethod
     def create_connector(capa_params:CapaParams) -> Device:
         Connector = Device('Connector')
-        Horizontal, Undercut = Resistor.create_connector(ResParams(connector_width=capa_params.length_x, connector_height=capa_params.connector_height, undercut_layer=capa_params.undercut_layer))
+        Horizontal, Undercut = Resistor.create_connector(ResParams(connector_width=capa_params.length_x, connector_height=capa_params.connector_height, ebeam_layer=capa_params.ebeam_layer, undercut_layer=capa_params.undercut_layer))
 
         if not capa_params.no_resistor:
-            Vertical = pg.rectangle(size=(-capa_params.arm_width, -(capa_params.length_y)), layer=default_ls['ebeam'])
+            Vertical = pg.rectangle(size=(-capa_params.arm_width, -(capa_params.length_y)), layer=capa_params.ebeam_layer)
 
             if capa_params.mirrored_x_axis:
                 Vertical.movex(-capa_params.length_x + capa_params.arm_width)
