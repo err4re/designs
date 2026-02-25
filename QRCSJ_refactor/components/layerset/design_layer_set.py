@@ -36,8 +36,16 @@ class DesignLayerSet:
 
         for group in self.layer_groups.values():
             for design_layer in group.layers.values():
-                layer_set.add_layer(design_layer.layer)
-                print(f'added layer {design_layer.layer.name}')
+                layer_set.add_layer(name = design_layer.layer.name,
+                                    gds_layer = design_layer.layer.gds_layer,
+                                    gds_datatype = design_layer.layer.gds_datatype,
+                                    description = design_layer.layer.description,
+                                    color = design_layer.layer.color,
+                                    alpha = design_layer.layer.alpha,
+                                    inverted = design_layer.layer.inverted,
+                                    dither = design_layer.layer.dither
+                                    )
+                
 
         return layer_set
     
