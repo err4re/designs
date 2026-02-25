@@ -321,7 +321,7 @@ class DolanJunction:
             return DolanJunction.build_undercut_h(dolan_junction_params)
 
         raise NotImplementedError(
-            f"Undercut shape '{shape}' is valid but no builder method is implemented for it yet."
+            f"Undercut shape '{shape}' is valid but no builder method is implemented for it yet!"
         )
         
     @staticmethod

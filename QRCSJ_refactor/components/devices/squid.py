@@ -11,7 +11,7 @@ import phidl.path as pp
 import gdspy
 
 ### Dolan junction
-from josephson_junction import DolanJunction, DolanJunctionParams
+from .josephson_junction import DolanJunction, DolanJunctionParams
 
 ### general python imports
 import numpy as np
@@ -36,19 +36,25 @@ class SquidParams:
     island_width: float = 20.22
     island_height: float = 1.2
 
+    overlap: float = 0.1
+
     shorted: bool = False
-    short
+    short_width: float = 0.22
     short_spacing: float = 13
     short_side: str = 'left'
 
     ### Layers ###
     ##############
     island_layer: Layer = default_ls['ebeam_low']
-    arm_layer: Layer = default_ls['ebeam']
+    short_layer: Layer = default_ls['ebeam']
 
     undercut_layer: Layer = default_ls['undercut']
 
     def __post_init__(self):
+
+        # validate junctions
+        if self.junction_1.params.junction_total_length != self.junction_2.params.junction_total_length:
+            raise ValueError(f'Junctions should be equal total length, but junction_1 is {self.junction_1.params.junction_total_length} and junction_2 is {self.junction_2.params.junction_total_length} long!')
 
         # validate short side
         valid_short_side = ['left', 'right']
@@ -94,8 +100,87 @@ class Squid:
         self.short_ref: Optional[DeviceReference] = None
 
 
-    def build_squid(self, squid_params: SquidParams) -> Device:
+    # def build_squid(self, squid_params: SquidParams) -> Device:
 
 
 
-    def _build_short(squid_params) -> 
+    def _build_short(squid_params: SquidParams) -> Device:
+
+        Short = Device('squid_short')
+
+        Short << pg.compass(size=(squid_params.short_width, squid_params.junction_1.params.junction_total_length + 2*squid_params.overlap), layer=squid_params.short_layer)
+
+        Short.add_port(name='in', midpoint=Short.ports['N'].midpoint - [0, squid_params.overlap], orientation=Short.ports['N'].orientation)
+        Short.add_port(name='out', midpoint=Short.ports['S'].midpoint + [0, squid_params.overlap], orientation=Short.ports['S'].orientation)
+
+        return Short
+    
+    def _build_top_island(squid_params: SquidParams) -> Device:
+
+        Island = Device('squid_island')
+
+        if squid_params.shorted:
+            Island << pg.rectangle(size=(squid_params.island_width+squid_params.short_spacing, squid_params.island_height), layer=squid_params.island_layer)
+
+            if squid_params.short_side == 'left':
+                Island.add_port(name='short',
+                                midpoint=(squid_params.short_width/2, 0),
+                                width=squid_params.short_width,
+                                orientation=-90
+                                )
+                Island.add_port(name='junction_1',
+                                midpoint=(squid_params.short_spacing + squid_params.junction_1.params.arm_width/2, 0),
+                                width=squid_params.junction_1.params.arm_width,
+                                orientation=-90
+                                )
+                Island.add_port(name='junction_2',
+                                midpoint=(squid_params.short_spacing + squid_params.island_width - squid_params.junction_2.params.arm_width/2, 0),
+                                width=squid_params.junction_2.params.arm_width,
+                                orientation=-90
+                                )
+                
+            elif squid_params.short_side == 'right':
+                Island.add_port(name='junction_1',
+                                midpoint=(squid_params.junction_1.params.arm_width/2, 0),
+                                width=squid_params.junction_1.params.arm_width,
+                                orientation=-90
+                                )
+                Island.add_port(name='junction_2',
+                                midpoint=(squid_params.island_width - squid_params.junction_2.params.arm_width/2, 0),
+                                width=squid_params.junction_2.params.arm_width,
+                                orientation=-90
+                                )
+                Island.add_port(name='short',
+                                midpoint=(squid_params.island_width + squid_params.short_spacing - squid_params.short_width/2, 0),
+                                width=squid_params.short_width,
+                                orientation=-90
+                                )
+            else:
+                raise NotImplementedError(f'Short side {squid_params.short_side} is valid but not implemented yet!')
+
+        else:
+            Island.add_port(name='junction_1',
+                            midpoint=(squid_params.junction_1.params.arm_width/2, 0),
+                            width=squid_params.junction_1.params.arm_width,
+                            orientation=-90
+                            )
+            Island.add_port(name='junction_2',
+                            midpoint=(squid_params.island_width - squid_params.junction_2.params.arm_width/2, 0),
+                            width=squid_params.junction_2.params.arm_width,
+                            orientation=-90
+                            )
+
+        Island.add_port(name='in',
+                        midpoint=(Island.ports['junction_1'].midpoint + [squid_params.island_width/2 - Island.ports['junction_1'].width/2, squid_params.island_height]),
+                        orientation=90)
+
+        return Island
+
+
+
+
+
+
+    
+
+
