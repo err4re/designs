@@ -241,9 +241,9 @@ class Squid:
         return Island
     
 
-    def _build_top_island_undercut(self, Squid_Device:  Device, squid_params: SquidParams) -> Device:
+    def _build_top_island_undercut(self, Squid_Device: Device, squid_params: SquidParams) -> Device:
         """
-        Build undercut for top island. Needs Island_Top and will respect undercut offset with respect to all elements already built into the squid at self.device.
+        Build undercut for top island. Needs Island_Top and will respect undercut offset with respect to all elements already built into the Squid_Device.
         """
 
         if self.Island_Top is None:
