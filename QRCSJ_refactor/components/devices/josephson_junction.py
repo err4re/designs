@@ -58,7 +58,7 @@ class DolanJunctionParams:
     h_undercut_width: float = 0.85
     h_undercut_height: float = 0.5
 
-    ### arn parameters ###
+    ### arm parameters ###
     ######################
     arm_width = 0.22
 
@@ -209,8 +209,8 @@ class DolanJunction:
         self.dolan_2_ref = Dolan_Junction << self.Dolan_2
 
         # connect dolan structures to undercut to form bridge, undercut is centered around zero
-        self.dolan_1_ref.connect(port=self.dolan_1_ref.ports['S'], destination=self.undercut_ref.ports['in'])
-        self.dolan_2_ref.connect(port=self.dolan_2_ref.ports['N'], destination=self.undercut_ref.ports['out'])
+        self.dolan_1_ref.connect(port=self.dolan_1_ref.ports['S'], destination=self.undercut_ref.ports['top'])
+        self.dolan_2_ref.connect(port=self.dolan_2_ref.ports['N'], destination=self.undercut_ref.ports['bot'])
 
         self.Arm_1 = DolanJunction.build_arm_rect(dolan_junction_params)
         self.Arm_2 = DolanJunction.build_arm_rect(dolan_junction_params)
@@ -219,11 +219,11 @@ class DolanJunction:
         self.arm_2_ref = Dolan_Junction << self.Arm_2
 
         # connect arms to dolan bridge part of the junction
-        self.arm_1_ref.connect(port=self.arm_1_ref.ports['S'], destination=self.dolan_1_ref.ports['in'])
-        self.arm_2_ref.connect(port=self.arm_2_ref.ports['N'], destination=self.dolan_2_ref.ports['out'])
+        self.arm_1_ref.connect(port=self.arm_1_ref.ports['S'], destination=self.dolan_1_ref.ports['top'])
+        self.arm_2_ref.connect(port=self.arm_2_ref.ports['N'], destination=self.dolan_2_ref.ports['bot'])
 
-        Dolan_Junction.add_port(name='in', port=self.arm_1_ref.ports['in'])
-        Dolan_Junction.add_port(name='out', port=self.arm_2_ref.ports['out'])
+        Dolan_Junction.add_port(name='top', port=self.arm_1_ref.ports['top'])
+        Dolan_Junction.add_port(name='bot', port=self.arm_2_ref.ports['bot'])
 
         # build stress relief structures
         self.Stress_1, self.Stress_2 = self.build_stress_relief(dolan_junction_params)
@@ -254,11 +254,11 @@ class DolanJunction:
         [Dolan.add_port(port=port) for port in Compass.ports.values()]
 
         # add ports to connect to arm design
-        Dolan.add_port(name='in',
+        Dolan.add_port(name='top',
                           midpoint=Dolan.ports['N'].midpoint - [0, dolan_junction_params.overlap],
                           orientation=Dolan.ports['N'].orientation)
         
-        Dolan.add_port(name='out',
+        Dolan.add_port(name='bot',
                           midpoint=Dolan.ports['S'].midpoint + [0, dolan_junction_params.overlap],
                           orientation=Dolan.ports['S'].orientation)
         
@@ -298,11 +298,11 @@ class DolanJunction:
         [Arm.add_port(port=port) for port in Compass.ports.values()]
 
         # add ports to connect to squid design
-        Arm.add_port(name='in',
+        Arm.add_port(name='top',
                           midpoint=Arm.ports['N'].midpoint - [0, dolan_junction_params.overlap],
                           orientation=Arm.ports['N'].orientation)
         
-        Arm.add_port(name='out',
+        Arm.add_port(name='bot',
                           midpoint=Arm.ports['S'].midpoint + [0, dolan_junction_params.overlap],
                           orientation=Arm.ports['S'].orientation)
 
@@ -338,11 +338,11 @@ class DolanJunction:
         [Undercut.add_port(port=port) for port in Compass.ports.values()]
 
         # add ports to connect to dolan design
-        Undercut.add_port(name='in',
+        Undercut.add_port(name='top',
                           midpoint=Undercut.ports['N'].midpoint + [0, dolan_junction_params.undercut_vertical_offset],
                           orientation=Undercut.ports['N'].orientation)
         
-        Undercut.add_port(name='out',
+        Undercut.add_port(name='bot',
                           midpoint=Undercut.ports['S'].midpoint - [0, dolan_junction_params.undercut_vertical_offset],
                           orientation=Undercut.ports['S'].orientation)
 
@@ -367,11 +367,11 @@ class DolanJunction:
         [Undercut.add_port(port=port) for port in Compass.ports.values()]
 
         # add ports to connect to dolan design
-        Undercut.add_port(name='in',
+        Undercut.add_port(name='top',
                           midpoint=Undercut.ports['N'].midpoint + [0, dolan_junction_params.undercut_vertical_offset],
                           orientation=Undercut.ports['N'].orientation)
         
-        Undercut.add_port(name='out',
+        Undercut.add_port(name='bot',
                           midpoint=Undercut.ports['S'].midpoint - [0, dolan_junction_params.undercut_vertical_offset],
                           orientation=Undercut.ports['S'].orientation)
         
