@@ -202,6 +202,7 @@ class DolanJunction:
 
         self.undercut_ref = Dolan_Junction << self.Undercut
 
+        # add option to choose betwenn rectangle or single pass line in the future?
         self.Dolan_1 = DolanJunction.build_dolan_rect(dolan_junction_params)
         self.Dolan_2 = DolanJunction.build_dolan_rect(dolan_junction_params)
 
@@ -468,7 +469,7 @@ class DolanJunction:
         # create zero width path using gdspy later, not possible with phidl
         # two point polygon to be replaced with gdspy zero width path only at the end of design procedure, to ensure phidl transformation work (e.g. mirror)
         # line width is set by dose in stress_line_layer
-        Compass.add_polygon(points=[(0, 0), (0, dolan_junction_params.stress_line_length)], layer=dolan_junction_params.stress_line_layer.gds_layer)
+        Compass.add_polygon(points=[(0, 0), (0, dolan_junction_params.stress_line_length)], layer=dolan_junction_params.stress_line_layer)
         
         
         Compass.add_port(name = "N", midpoint=(0, dolan_junction_params.stress_line_length), orientation=90)

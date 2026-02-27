@@ -83,6 +83,7 @@ class SeriesResistorParams:
     ##############
 
     segment_layer: Layer = default_ls['ebeam_strong']
+    segment_line_layer: Layer = default_ls['ebeam_strong']
     elbow_layer: Layer = default_ls['ebeam']
     connector_layer: Layer = default_ls['ebeam_low']
 
@@ -155,22 +156,28 @@ class SeriesResistor:
         self.Elbow_Right_Undercut: Optional[Device] = None
 
         self.elbow_right_refs: Optional[list[DeviceReference]] = []
-        self.elbow_right_undercut_ref: Optional[list[DeviceReference]] = []
+        self.elbow_right_undercut_ref: Optional[DeviceReference] = None
 
         # all left elbows are references to the same device
         self.Elbow_Left: Optional[Device] = None
         self.Elbow_Left_Undercut: Optional[Device] = None
 
         self.elbow_left_refs: Optional[list[DeviceReference]] = []
-        self.elbow_left_undercut_refs: Optional[list[DeviceReference]] = []
+        self.elbow_left_undercut_ref: Optional[DeviceReference] = None
 
         # top connector (other circuit elements will connect to the resistor here)
         self.Connector_Top: Optional[Device] = None
-        self.connector_top_ref: Optional[Device] = None
+        self.connector_top_ref: Optional[DeviceReference] = None
+
+        self.Connector_Top_Undercut: Optional[Device] = None
+        self.connector_top_undercut_ref: Optional[DeviceReference] = None
 
         # bot connector (other circuit elements will connect to the resistor here)
         self.Connector_Bot: Optional[Device] = None
         self.connector_bot_ref: Optional[DeviceReference] = None
+
+        self.Connector_Bot_Undercut: Optional[Device] = None
+        self.connector_bot_undercut_ref: Optional[DeviceReference] = None
 
 
 
@@ -182,23 +189,29 @@ class SeriesResistor:
         Series_Resistor = Device('series_resistor')
 
         # add all segments needed for this resistor
-        self.Segment = SeriesResistor._build_segment(res_params)
+        # add option to choose betwenn rectangle or single pass line in the future?
+        self.Segment = SeriesResistor._build_segment_rect(res_params)
         [self.segment_refs.append(Series_Resistor << self.Segment) for i in range(res_params.segment_number)]
         
         self.Elbow_Right = SeriesResistor._build_elbow_right(res_params)
         self.Elbow_Left = SeriesResistor._build_elbow_left(res_params)
 
-        self.Connector_Top = SeriesResistor._build_connector_top(res_params)
-        self.connector_top_ref = Series_Resistor << self.Connector_Top
+        if res_params.connectors:
+            self.Connector_Top = SeriesResistor._build_connector_top(res_params)
+            self.connector_top_ref = Series_Resistor << self.Connector_Top
 
-        self.Connector_Bot = SeriesResistor._build_connector_top(res_params)
-        self.connector_bot_ref = Series_Resistor << self.Connector_Bot
+            self.Connector_Bot = SeriesResistor._build_connector_bot(res_params)
+            self.connector_bot_ref = Series_Resistor << self.Connector_Bot
 
+        # order of assembly/connecting elements together depends on which side the series resistor faces
+        # facing left starts with right elbow
         if res_params.facing == 'left':
 
+            # connect top connector to first resistive segment
             if res_params.connectors:
-                self.segment_refs[0].connect(port=self.segment_refs[0].ports['left'], destination=self.connector_top_ref.ports['right'])
+                self.connector_top_ref.connect(port=self.connector_top_ref.ports['right'], destination=self.segment_refs[0].ports['left'])
 
+            # connect top to bottom segments and elbows between segments
             for i,segment_ref in enumerate(self.segment_refs[1:]):
 
                 if (i+1)%2:
@@ -207,7 +220,7 @@ class SeriesResistor:
 
                     segment_ref.connect(port=segment_ref.ports['right'], destination=elbow_right_ref.ports['bot'])
 
-                    self.elbow_left_refs.append(elbow_right_ref)
+                    self.elbow_right_refs.append(elbow_right_ref)
                 else:
                     elbow_left_ref = Series_Resistor << self.Elbow_Left
                     elbow_left_ref.connect(port=elbow_left_ref.ports['top'], destination=self.segment_refs[i].ports['left'])
@@ -216,12 +229,14 @@ class SeriesResistor:
 
                     self.elbow_left_refs.append(elbow_left_ref)
 
-            if res_params.segment_number_even:
-                self.connector_bot_ref.connect(port=self.connector_bot_ref.ports['right'], destination=self.segment_refs[-1].ports['left'])
-            else:
-                self.connector_bot_ref.connect(port=self.connector_bot_ref.ports['left'], destination=self.segment_refs[-1].ports['right'])
-            
-
+            # connect bot connector last
+            if res_params.connectors:
+                if res_params.segment_number_even:
+                    self.connector_bot_ref.connect(port=self.connector_bot_ref.ports['right'], destination=self.segment_refs[-1].ports['left'])
+                else:
+                    self.connector_bot_ref.connect(port=self.connector_bot_ref.ports['left'], destination=self.segment_refs[-1].ports['right'])
+                
+        # facing right starts with left elbow
         elif res_params.facing == 'right':
 
             if res_params.connectors:
@@ -242,23 +257,59 @@ class SeriesResistor:
 
                     segment_ref.connect(port=segment_ref.ports['right'], destination=elbow_right_ref.ports['bot'])
 
-                    self.elbow_left_refs.append(elbow_right_ref)
+                    self.elbow_right_refs.append(elbow_right_ref)
 
-            if res_params.segment_number_even:
-                self.connector_bot_ref.connect(port=self.connector_bot_ref.ports['left'], destination=self.segment_refs[-1].ports['right'])
-            else:
-                self.connector_bot_ref.connect(port=self.connector_bot_ref.ports['right'], destination=self.segment_refs[-1].ports['left'])
+            if res_params.connectors:
+                if res_params.segment_number_even:
+                    self.connector_bot_ref.connect(port=self.connector_bot_ref.ports['left'], destination=self.segment_refs[-1].ports['right'])
+                else:
+                    self.connector_bot_ref.connect(port=self.connector_bot_ref.ports['right'], destination=self.segment_refs[-1].ports['left'])
 
 
-        ### when creating undercuts make sure the elbows actually exist
+        ### when creating elbow undercuts make sure the elbows actually exist
+        ### e.g. for two segments only one type of elbow will be created
+        if self.elbow_right_refs:
 
-        
-        # self.Elbow_Right_Undercut = self._build_elbow_right_undercut(Series_Resistor, res_params)
-        # self.elbow_right_undercut_ref = Series_Resistor << self.Elbow_Right_Undercut
+            self.Elbow_Right_Undercut = self._build_elbow_right_undercut(Series_Resistor, res_params)
+            self.Elbow_Right_Undercut.move(origin= self.Elbow_Right_Undercut.center,
+                                               destination=self.Elbow_Right.center + [res_params.undercut_width/2, 0]
+                                               )
+         
+            self.elbow_right_undercut_ref = self.Elbow_Right << self.Elbow_Right_Undercut
 
-        # self.Elbow_Left_Undercut = self._build_elbow_left_undercut(Series_Resistor, res_params)
-        # self.elbow_left_undercut_ref = Series_Resistor << self.Elbow_Left_Undercut
 
+        if self.elbow_left_refs:
+
+            self.Elbow_Left_Undercut = self._build_elbow_left_undercut(Series_Resistor, res_params)
+            self.Elbow_Left_Undercut.move(origin= self.Elbow_Left_Undercut.center,
+                                               destination=self.Elbow_Left.center + [res_params.undercut_width/2, 0]
+                                               )
+         
+            self.elbow_right_undercut_ref = self.Elbow_Left << self.Elbow_Left_Undercut
+
+
+        ### connector undercuts
+        ### these undercut devices are in the same places as the corresponding references, this makes for easier modification later
+        if res_params.connectors:
+            self.Connector_Top_Undercut = self._build_connector_top_undercut(Series_Resistor, res_params)
+            self.Connector_Top_Undercut.move(origin= self.Connector_Top_Undercut.center,
+                                               destination=self.Connector_Top.center + [res_params.undercut_width/2, 0]
+                                               )
+         
+            self.connector_top_undercut_ref = self.Connector_Top << self.Connector_Top_Undercut
+
+            self.Connector_Bot_Undercut = self._build_connector_bot_undercut(Series_Resistor, res_params)
+            self.Connector_Bot_Undercut.move(origin= self.Connector_Bot_Undercut.center,
+                                               destination=self.Connector_Bot.center + [res_params.undercut_width/2, 0]
+                                               )
+         
+            self.connector_bot_undercut_ref = self.Connector_Bot << self.Connector_Bot_Undercut
+
+
+
+
+        # add ports to connect to other components
+        self._add_ports(Series_Resistor, res_params)
 
         # save device and params
         self.device = Series_Resistor
@@ -267,10 +318,73 @@ class SeriesResistor:
         return Series_Resistor
 
 
-    @staticmethod
-    def _build_segment(res_params: SeriesResistorParams) -> Device:
+    def _add_ports(self, Series_Resistor: Device, res_params: SeriesResistorParams):
+        """
+        Adds ports to the Series_Resistor device for connection with other components.
+        """
 
-        Segment = Device('segment_resistive')
+        ### left and right ports
+        # if the series resistor has connectors add ports on the connectors
+        if res_params.connectors:
+            
+            if self.connector_top_ref is None:
+                raise RuntimeError(f'Top connector has not been built yet, self.connector_top_ref is {self.connector_top_ref}!')
+
+            if self.connector_bot_ref is None:
+                raise RuntimeError(f'Bot connector has not been built yet, self.connector_bot_ref is {self.connector_bot_ref}!')
+
+
+            if res_params.facing == 'left':
+                Series_Resistor.add_port(name='top_left', port=self.connector_top_ref.ports['left'])
+
+                if res_params.segment_number_even:
+                    Series_Resistor.add_port(name='bot_left', port=self.connector_bot_ref.ports['left'])
+                else:
+                    Series_Resistor.add_port(name='bot_right', port=self.connector_bot_ref.ports['right'])
+
+            elif res_params.facing == 'right':
+                Series_Resistor.add_port(port=self.connector_top_ref.ports['right'])
+
+                if res_params.segment_number_even:
+                    Series_Resistor.add_port(name='bot_right', port=self.connector_bot_ref.ports['right'])
+                else:
+                    Series_Resistor.add_port(name='bot_left', port=self.connector_bot_ref.ports['left'])
+        
+        # if the series resistor does not have connectors add ports on the first and last resistive segment
+        else:
+            if res_params.facing == 'left':
+                Series_Resistor.add_port(name='top_left', port=self.segment_refs[0].ports['left'])
+
+                if res_params.segment_number_even:
+                    Series_Resistor.add_port(name='bot_left', port=self.segment_refs[-1].ports['left'])
+                else:
+                    Series_Resistor.add_port(name='bot_right', port=self.segment_refs[-1].ports['right'])
+
+            elif res_params.facing == 'right':
+                Series_Resistor.add_port(name='top_right', port=self.segment_refs[0].ports['right'])
+
+                if res_params.segment_number_even:
+                    Series_Resistor.add_port(name='bot_right', port=self.segment_refs[-1].ports['right'])
+                else:
+                    Series_Resistor.add_port(name='bot_left', port=self.segment_refs[-1].ports['left'])
+
+
+        ### top and bot ports
+        if res_params.connectors:
+            
+            Series_Resistor.add_port(name='top_top', port=self.connector_top_ref.ports['top'])
+
+            Series_Resistor.add_port(name='bot_bot', port=self.connector_bot_ref.ports['bot'])
+
+
+
+        
+
+
+    @staticmethod
+    def _build_segment_rect(res_params: SeriesResistorParams) -> Device:
+
+        Segment = Device('segment_resistive_rect')
 
         Segment << pg.rectangle(size=(res_params.segment_length + 2*res_params.overlap, res_params.segment_width), layer=res_params.segment_layer)
 
@@ -280,6 +394,24 @@ class SeriesResistor:
                          orientation=180)
         Segment.add_port(name='right',
                          midpoint=[res_params.segment_length + res_params.overlap, res_params.segment_width/2],
+                         width=res_params.segment_width,
+                         orientation=0)
+
+        return Segment
+    
+    @staticmethod
+    def _build_segment_line(res_params: SeriesResistorParams) -> Device:
+
+        Segment = Device('segment_resistive_line')
+
+        Segment.add_polygon(points=[(0, 0), (res_params.segment_length + 2*res_params.overlap, 0)], layer=res_params.segment_line_layer)
+
+        Segment.add_port(name='left',
+                         midpoint=[res_params.overlap, 0],
+                         width=res_params.segment_width,
+                         orientation=180)
+        Segment.add_port(name='right',
+                         midpoint=[res_params.segment_length + res_params.overlap, 0],
                          width=res_params.segment_width,
                          orientation=0)
 
@@ -314,7 +446,12 @@ class SeriesResistor:
                                    midpoint=[res_params.connector_length, connector_height/2],
                                    width=connector_height,
                                    orientation=0)
-            
+        
+        x_center = (Connector_Top.xmax + Connector_Top.xmin)/2
+        Connector_Top.add_port(name='top',
+                               midpoint=(x_center, Connector_Top.ymax),
+                               width=res_params.connector_length,
+                               orientation=90)
 
         return Connector_Top
     
@@ -326,16 +463,16 @@ class SeriesResistor:
         """
 
         if self.Connector_Top is None:
-            raise RuntimeError(f'Top connector was not been built yet, self.Connector_Top is {self.Connector_Top}!')
+            raise RuntimeError(f'Top connector has not been built yet, self.Connector_Top is {self.Connector_Top}!')
 
         Connector_Top_Undercut = Device('connector_top_undercut')
 
         Undercut = Device()
 
-        points = [(self.connector_top_ref[0].xmin, self.connector_top_ref[0].ymin - res_params.undercut_offset),
-                  (self.connector_top_ref[0].xmin, self.connector_top_ref[0].ymax + res_params.undercut_offset),
-                  (self.connector_top_ref[0].xmax + res_params.undercut_offset, self.connector_top_ref[0].ymax + + res_params.undercut_offset),
-                  (self.connector_top_ref[0].xmax+ res_params.undercut_offset, self.connector_top_ref[0].ymin - res_params.undercut_offset)]
+        points = [(self.connector_top_ref.xmin, self.connector_top_ref.ymin - res_params.undercut_width),
+                  (self.connector_top_ref.xmin, self.connector_top_ref.ymax + res_params.undercut_width),
+                  (self.connector_top_ref.xmax + res_params.undercut_width, self.connector_top_ref.ymax + res_params.undercut_width),
+                  (self.connector_top_ref.xmax+ res_params.undercut_width, self.connector_top_ref.ymin - res_params.undercut_width)]
         Undercut.add_polygon(points)
 
         Undercut_Offset = pg.offset(elements=[Resistor_Device], distance=res_params.undercut_offset)
@@ -356,16 +493,16 @@ class SeriesResistor:
         """
 
         if self.Connector_Bot is None:
-            raise RuntimeError(f'Top connector was not been built yet, self.Connector_Bot is {self.Connector_Bot}!')
+            raise RuntimeError(f'Top connector has not been built yet, self.Connector_Bot is {self.Connector_Bot}!')
 
         Connector_Bot_Undercut = Device('connector_bot_undercut')
 
         Undercut = Device()
 
-        points = [(self.connector_bot_ref[0].xmin, self.connector_bot_ref[0].ymin - res_params.undercut_offset),
-                  (self.connector_bot_ref[0].xmin, self.connector_bot_ref[0].ymax + res_params.undercut_offset),
-                  (self.connector_bot_ref[0].xmax + res_params.undercut_offset, self.connector_bot_ref[0].ymax + + res_params.undercut_offset),
-                  (self.connector_bot_ref[0].xmax+ res_params.undercut_offset, self.connector_bot_ref[0].ymin - res_params.undercut_offset)]
+        points = [(self.connector_bot_ref.xmin, self.connector_bot_ref.ymin - res_params.undercut_width),
+                  (self.connector_bot_ref.xmin, self.connector_bot_ref.ymax + res_params.undercut_width),
+                  (self.connector_bot_ref.xmax + res_params.undercut_width, self.connector_bot_ref.ymax + res_params.undercut_width),
+                  (self.connector_bot_ref.xmax+ res_params.undercut_width, self.connector_bot_ref.ymin - res_params.undercut_width)]
         Undercut.add_polygon(points)
 
         Undercut_Offset = pg.offset(elements=[Resistor_Device], distance=res_params.undercut_offset)
@@ -420,6 +557,11 @@ class SeriesResistor:
                                    width=connector_height,
                                    orientation=0)
             
+        x_center = (Connector_Bot.xmax + Connector_Bot.xmin)/2
+        Connector_Bot.add_port(name='bot',
+                               midpoint=(x_center, Connector_Bot.ymin),
+                               width=res_params.connector_length,
+                               orientation=-90)
 
         return Connector_Bot   
 
@@ -554,10 +696,10 @@ class SeriesResistor:
 
         Undercut = Device()
 
-        points = [(self.elbow_right_refs[0].xmin, self.elbow_right_refs[0].ymin - res_params.undercut_offset),
-                  (self.elbow_right_refs[0].xmin, self.elbow_right_refs[0].ymax + res_params.undercut_offset),
-                  (self.elbow_right_refs[0].xmax + res_params.undercut_offset, self.elbow_right_refs[0].ymax + + res_params.undercut_offset),
-                  (self.elbow_right_refs[0].xmax+ res_params.undercut_offset, self.elbow_right_refs[0].ymin - res_params.undercut_offset)]
+        points = [(self.elbow_right_refs[0].xmin, self.elbow_right_refs[0].ymin - res_params.undercut_width),
+                  (self.elbow_right_refs[0].xmin, self.elbow_right_refs[0].ymax + res_params.undercut_width),
+                  (self.elbow_right_refs[0].xmax + res_params.undercut_width, self.elbow_right_refs[0].ymax + res_params.undercut_width),
+                  (self.elbow_right_refs[0].xmax + res_params.undercut_width, self.elbow_right_refs[0].ymin - res_params.undercut_width)]
         Undercut.add_polygon(points)
 
         Undercut_Offset = pg.offset(elements=[Resistor_Device], distance=res_params.undercut_offset)
@@ -585,10 +727,10 @@ class SeriesResistor:
         Undercut = Device()
 
         # points are actually the same as for right elbow undercut, opportunity for combining the two?
-        points = [(self.elbow_left_refs[0].xmin, self.elbow_left_refs[0].ymin - res_params.undercut_offset),
-                  (self.elbow_left_refs[0].xmin, self.elbow_left_refs[0].ymax + res_params.undercut_offset),
-                  (self.elbow_left_refs[0].xmax + res_params.undercut_offset, self.elbow_left_refs[0].ymax + + res_params.undercut_offset),
-                  (self.elbow_left_refs[0].xmax+ res_params.undercut_offset, self.elbow_left_refs[0].ymin - res_params.undercut_offset)]
+        points = [(self.elbow_left_refs[0].xmin, self.elbow_left_refs[0].ymin - res_params.undercut_width),
+                  (self.elbow_left_refs[0].xmin, self.elbow_left_refs[0].ymax + res_params.undercut_width),
+                  (self.elbow_left_refs[0].xmax + res_params.undercut_width, self.elbow_left_refs[0].ymax + res_params.undercut_width),
+                  (self.elbow_left_refs[0].xmax+ res_params.undercut_width, self.elbow_left_refs[0].ymin - res_params.undercut_width)]
         Undercut.add_polygon(points)
 
         Undercut_Offset = pg.offset(elements=[Resistor_Device], distance=res_params.undercut_offset)
